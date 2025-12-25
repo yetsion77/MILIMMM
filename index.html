@@ -20,6 +20,14 @@
                     <p>יש לכתוב לפי כללי הכתיב המלא.</p>
                     <p class="note">אם לוחצים "דלג" - גם השעון מדלג 5 שניות.</p>
                 </div>
+
+                <div class="leaderboard-section">
+                    <h3>🏆 טבלת שיאנים</h3>
+                    <div id="leaderboard-container">
+                        <div class="loader">טוען נתונים...</div>
+                    </div>
+                </div>
+
                 <button id="start-btn" class="btn primary big-btn">יאללה, או בעברית צחה -<br>הבה נתחיל</button>
             </div>
         </div>
@@ -58,16 +66,25 @@
                     <span class="label">תוצאה סופית</span>
                     <span id="final-score-display" class="big-number">0</span>
                 </div>
+
+                <div id="high-score-form" class="hidden">
+                    <p class="congrats-text">כל הכבוד! נכנסת לטבלת השיאנים!</p>
+                    <div class="input-group">
+                        <input type="text" id="player-name-input" placeholder="הכנס את שמך" maxlength="15">
+                        <button id="submit-score-btn" class="btn primary small-btn">שמור</button>
+                    </div>
+                </div>
+
                 <div class="final-stats">
                     <p>מילים נכונות: <span id="final-correct">0</span></p>
                 </div>
-                <button id="restart-btn" class="btn primary">משחק חדש</button>
+                <button id="restart-btn" class="btn secondary">משחק חדש</button>
             </div>
         </div>
+
     </div>
 
-    <script src="words.js"></script>
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 
 </html>

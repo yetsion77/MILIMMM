@@ -1,3 +1,22 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+import { getDatabase, ref, push, query, orderByChild, limitToLast, get } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+import { wordList } from './words.js';
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDPj2_dReuka9hBpCfjrqQIPRrakzH-ocw",
+    authDomain: "milimm-b51ea.firebaseapp.com",
+    projectId: "milimm-b51ea",
+    storageBucket: "milimm-b51ea.firebasestorage.app",
+    messagingSenderId: "122431416046",
+    appId: "1:122431416046:web:993ea5ab5b8832ec8db5ff",
+    measurementId: "G-6EVVMQ4NRY",
+    databaseURL: "https://milimm-b51ea-default-rtdb.firebaseio.com"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
 const GAME_DURATION = 90;
 const SKIP_PENALTY = 5;
 
@@ -27,22 +46,139 @@ const finalScoreDisplay = document.getElementById('final-score-display');
 const finalCorrectDisplay = document.getElementById('final-correct');
 const restartBtn = document.getElementById('restart-btn');
 
+const leaderboardContainer = document.getElementById('leaderboard-container');
+const highScoreForm = document.getElementById('high-score-form');
+const playerNameInput = document.getElementById('player-name-input');
+const submitScoreBtn = document.getElementById('submit-score-btn');
+
+// --- LEADERBOARD LOGIC (Realtime Database) ---
+
+async function loadLeaderboard() {
+    leaderboardContainer.innerHTML = '<div class="loader">טוען נתונים...</div>';
+
+    try {
+        const scoresRef = ref(db, 'scores');
+        // RTDB sorts ascending, so we pull the last 10 (highest)
+        const q = query(scoresRef, orderByChild('score'), limitToLast(10));
+        const snapshot = await get(q);
+
+        if (!snapshot.exists()) {
+            leaderboardContainer.innerHTML = '<div class="loader">אין עדיין תוצאות. היה הראשון!</div>';
+            return;
+        }
+
+        let scores = [];
+        snapshot.forEach((childSnapshot) => {
+            scores.push(childSnapshot.val());
+        });
+
+        // Reverse to show highest first
+        scores.reverse();
+
+        let html = '<table class="leaderboard-table"><thead><tr><th>#</th><th>שם</th><th>ניקוד</th></tr></thead><tbody>';
+
+        scores.forEach((data, index) => {
+            html += `
+                <tr>
+                    <td class="rank-cell">${index + 1}</td>
+                    <td>${data.name}</td>
+                    <td class="score-cell">${data.score}</td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+        leaderboardContainer.innerHTML = html;
+
+    } catch (e) {
+        console.error("Error loading leaderboard: ", e);
+        leaderboardContainer.innerHTML = '<div class="loader" style="color:red">שגיאה בטעינת נתונים</div>';
+    }
+}
+
+async function checkHighScore(score) {
+    highScoreForm.classList.add('hidden');
+    if (score === 0) return;
+
+    try {
+        const scoresRef = ref(db, 'scores');
+        const q = query(scoresRef, orderByChild('score'), limitToLast(10));
+        const snapshot = await get(q);
+
+        let isHighScore = false;
+
+        // If we have fewer than 10 scores, any score > 0 is a high score
+        if (!snapshot.exists() || snapshot.size < 10) {
+            isHighScore = true;
+        } else {
+            // Check the lowest score (which is the FIRST one since we ordered by score ascending)
+            let lowestScore = Infinity;
+            let count = 0;
+            snapshot.forEach(child => {
+                count++;
+                if (count === 1) lowestScore = child.val().score;
+            });
+
+            if (score > lowestScore) {
+                isHighScore = true;
+            }
+        }
+
+        if (isHighScore) {
+            highScoreForm.classList.remove('hidden');
+            setTimeout(() => playerNameInput.focus(), 500);
+        }
+
+    } catch (e) {
+        console.error("Error checking high score: ", e);
+        // Fallback: show form on error so user isn't blocked 
+        highScoreForm.classList.remove('hidden');
+    }
+}
+
+async function submitHighScore() {
+    const name = playerNameInput.value.trim();
+    if (!name) return;
+
+    submitScoreBtn.disabled = true;
+    submitScoreBtn.innerText = 'שומר...';
+
+    try {
+        const scoresRef = ref(db, 'scores');
+        await push(scoresRef, {
+            name: name,
+            score: gameState.score,
+            date: new Date().toISOString()
+        });
+
+        highScoreForm.innerHTML = '<p class="congrats-text">התוצאה נשמרה בהצלחה!</p>';
+
+    } catch (e) {
+        console.error("Error saving score: ", e);
+        alert("שגיאה בשמירה: " + e.message); // Helpful alert for debugging
+        submitScoreBtn.innerText = 'שגיאה';
+        submitScoreBtn.disabled = false;
+    }
+}
+
+// --- GAME LOGIC ---
+
 function showStartScreen() {
     startScreen.classList.add('active');
     startScreen.classList.remove('hidden');
     gameHeader.classList.add('hidden');
     gamePage.classList.add('hidden');
     resultsModal.classList.add('hidden');
+
+    loadLeaderboard();
 }
 
 function initGame() {
-    // Reset state
     gameState.score = 0;
     gameState.correctCount = 0;
     gameState.timeLeft = GAME_DURATION;
     gameState.isPlaying = false;
 
-    // UI Transitions
     startScreen.classList.remove('active');
     startScreen.classList.add('hidden');
 
@@ -50,10 +186,22 @@ function initGame() {
     gamePage.classList.remove('hidden');
     resultsModal.classList.add('hidden');
 
-    // Reset available words
+    highScoreForm.classList.add('hidden');
+    highScoreForm.innerHTML = `
+        <p class="congrats-text">כל הכבוד! נכנסת לטבלת השיאנים!</p>
+        <div class="input-group">
+            <input type="text" id="player-name-input" placeholder="הכנס את שמך" maxlength="15">
+            <button id="submit-score-btn" class="btn primary small-btn">שמור</button>
+        </div>
+    `;
+
+    const newSubmitBtn = document.getElementById('submit-score-btn');
+    if (newSubmitBtn) newSubmitBtn.addEventListener('click', submitHighScore);
+
+    document.getElementById('player-name-input').value = '';
+
     gameState.availableIndices = wordList.map((_, i) => i);
 
-    // UI Update
     updateScore();
     updateTimer();
 
@@ -93,17 +241,14 @@ function updateScore() {
 
 function nextWord() {
     if (gameState.availableIndices.length === 0) {
-        // Just in case they finish all words (unlikely in 90s but possible)
         endGame();
         return;
     }
 
-    // Pick random index
     const randPos = Math.floor(Math.random() * gameState.availableIndices.length);
     const wordIndex = gameState.availableIndices[randPos];
     gameState.currentWordIndex = wordIndex;
 
-    // Remove from available
     gameState.availableIndices.splice(randPos, 1);
 
     const wordObj = wordList[wordIndex];
@@ -112,14 +257,12 @@ function nextWord() {
 
 function renderWord(wordObj) {
     foreignWordEl.innerText = wordObj.foreign;
-    // Trigger animation
     foreignWordEl.classList.remove('fade-in');
-    void foreignWordEl.offsetWidth; // trigger reflow
+    void foreignWordEl.offsetWidth;
     foreignWordEl.classList.add('fade-in');
 
     inputContainer.innerHTML = '';
 
-    // Split hebrew answer by space to handle multi-word answers
     const parts = wordObj.hebrew.split(' ');
 
     parts.forEach((part, partIndex) => {
@@ -128,30 +271,24 @@ function renderWord(wordObj) {
 
         for (let i = 0; i < part.length; i++) {
             const letter = part[i];
-            // Skip non-alphanumeric chars if strictly necessary, but user said "spaces"
-            // We'll create inputs for all chars in the word provided in the list logic
-            // Assuming the list contains valid Hebrew chars.
 
             const input = document.createElement('input');
             input.type = 'text';
             input.className = 'letter-input';
             input.maxLength = 1;
-            input.dataset.letter = letter; // Store correct answer
+            input.dataset.letter = letter;
             input.dataset.part = partIndex;
             input.dataset.index = i;
-            // inputmode="text" is standard, but sometimes "search" or "none" helps control kb?
-            // "text" is best for Hebrew.
 
             input.addEventListener('input', (e) => handleInput(e, input));
             input.addEventListener('keydown', (e) => handleKeyDown(e, input));
-            input.addEventListener('focus', (e) => e.target.select()); // auto select on focus
+            input.addEventListener('focus', (e) => e.target.select());
 
             groupEl.appendChild(input);
         }
         inputContainer.appendChild(groupEl);
     });
 
-    // Focus first input
     const firstInput = inputContainer.querySelector('input');
     if (firstInput) firstInput.focus();
 }
@@ -159,9 +296,7 @@ function renderWord(wordObj) {
 function handleInput(e, input) {
     const val = e.target.value;
 
-    // If not empty, move next
     if (val.length > 0) {
-        // Auto move to next input
         const allInputs = Array.from(inputContainer.querySelectorAll('input'));
         const idx = allInputs.indexOf(input);
 
@@ -174,18 +309,14 @@ function handleInput(e, input) {
 }
 
 function handleKeyDown(e, input) {
-    // Handle backspace
     if (e.key === 'Backspace') {
         if (input.value === '') {
-            // Move previous
             const allInputs = Array.from(inputContainer.querySelectorAll('input'));
             const idx = allInputs.indexOf(input);
             if (idx > 0) {
-                e.preventDefault(); // prevent deleting char in prev input immediately
+                e.preventDefault();
                 const prev = allInputs[idx - 1];
                 prev.focus();
-                // prev.value = ''; // Optional: auto-delete prev char? User asked "delete backwards"
-                // Usually "delete backwards" means if I'm empty, go back.
             }
         }
     }
@@ -194,27 +325,17 @@ function handleKeyDown(e, input) {
 function checkWord() {
     const allInputs = Array.from(inputContainer.querySelectorAll('input'));
     const currentVal = allInputs.map(input => input.value).join('');
-    const correctVal = allInputs.map(input => input.dataset.letter).join(''); // This flattens the multi-word structure into one string
+    const correctVal = allInputs.map(input => input.dataset.letter).join('');
 
-    // We compare flattened strings (ignoring spaces which we skipped in input creation)
-
-    // Check if fully filled
     const isFilled = allInputs.every(input => input.value.length > 0);
 
     if (isFilled) {
         if (currentVal === correctVal) {
-            // Success!
             success();
         } else {
-            // Error visual
             allInputs.forEach(input => input.classList.add('shake'));
             setTimeout(() => {
                 allInputs.forEach(input => input.classList.remove('shake'));
-                // Clear inputs? Or let user fix?
-                // Let user fix usually better, but for speed game maybe clear?
-                // Request didn't specify, but "speed" games usually clear on error or just shake. 
-                // Let's clear to force retry or just select all?
-                // Simple shake is good feedback.
                 allInputs.forEach(input => input.value = '');
                 allInputs[0].focus();
             }, 500);
@@ -227,9 +348,6 @@ function success() {
     gameState.correctCount++;
     updateScore();
 
-    // Optional: Add time bonus? Not specified.
-
-    // Visual feedback
     const inputs = document.querySelectorAll('.letter-input');
     inputs.forEach(i => i.classList.add('correct'));
 
@@ -243,18 +361,14 @@ function skipWord() {
     gameState.timeLeft -= SKIP_PENALTY;
     updateTimer();
 
-    // Reveal answer
     const allInputs = document.querySelectorAll('.letter-input');
     allInputs.forEach(input => {
         input.value = input.dataset.letter;
-        input.classList.add('correct'); // Optional: maybe different color for skip?
-        // Let's stick to correct style or maybe just filled style. 
-        // User asked "Show the correct name", usually implies just text.
+        input.classList.add('correct');
     });
 
-    // Temporarily pause interaction
     const wasPlaying = gameState.isPlaying;
-    gameState.isPlaying = false; // Prevent double clicks
+    gameState.isPlaying = false;
 
     setTimeout(() => {
         if (wasPlaying) gameState.isPlaying = true;
@@ -269,13 +383,15 @@ function endGame() {
     finalScoreDisplay.innerText = gameState.score;
     finalCorrectDisplay.innerText = gameState.correctCount;
     resultsModal.classList.remove('hidden');
+
+    checkHighScore(gameState.score);
 }
 
 // Event Listeners
 skipBtn.addEventListener('click', skipWord);
-restartBtn.addEventListener('click', initGame); // Restart goes straight to game, or maybe back to start? "New Game" usually implies restart action.
+restartBtn.addEventListener('click', initGame);
 startBtn.addEventListener('click', initGame);
+if (submitScoreBtn) submitScoreBtn.addEventListener('click', submitHighScore);
 
-// Start with Start Screen
-// initGame(); // Removed auto-start
+// Initial Load
 showStartScreen();

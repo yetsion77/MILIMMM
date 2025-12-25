@@ -1,4 +1,4 @@
-const wordList = [
+export const wordList = [
     { foreign: "אנתרקס", hebrew: "גחלת" },
     { foreign: "אס-אם-אס", hebrew: "מסרון" },
     { foreign: "אסיסטנט", hebrew: "סייע" },
