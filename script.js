@@ -92,7 +92,8 @@ async function loadLeaderboard() {
 
     } catch (e) {
         console.error("Error loading leaderboard: ", e);
-        leaderboardContainer.innerHTML = '<div class="loader" style="color:red">שגיאה בטעינת נתונים</div>';
+        // Show explicit error to user for debugging
+        leaderboardContainer.innerHTML = `<div class="loader" style="color:red; font-size:0.8rem; direction:ltr;">Error: ${e.message}</div>`;
     }
 }
 
@@ -107,8 +108,8 @@ async function checkHighScore(score) {
 
         let isHighScore = false;
 
-        // If we have fewer than 10 scores, any score > 0 is a high score
-        if (!snapshot.exists() || snapshot.size < 10) {
+        // FIX: use numChildren() for RTDB
+        if (!snapshot.exists() || snapshot.numChildren() < 10) {
             isHighScore = true;
         } else {
             // Check the lowest score (which is the FIRST one since we ordered by score ascending)
@@ -131,8 +132,7 @@ async function checkHighScore(score) {
 
     } catch (e) {
         console.error("Error checking high score: ", e);
-        // Fallback: show form on error so user isn't blocked 
-        highScoreForm.classList.remove('hidden');
+        highScoreForm.classList.remove('hidden'); // Show on error
     }
 }
 
