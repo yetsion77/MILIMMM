@@ -10,7 +10,7 @@ const firebaseConfig = {
     messagingSenderId: "122431416046",
     appId: "1:122431416046:web:993ea5ab5b8832ec8db5ff",
     measurementId: "G-6EVVMQ4NRY",
-    databaseURL: "https://milimm-b51ea-default-rtdb.firebaseio.com"
+    databaseURL: "https://milimm-b51ea-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
 // Initialize Firebase
