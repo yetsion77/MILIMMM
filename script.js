@@ -186,17 +186,9 @@ function initGame() {
     gamePage.classList.remove('hidden');
     resultsModal.classList.add('hidden');
 
+    // Reset form
     highScoreForm.classList.add('hidden');
-    highScoreForm.innerHTML = `
-        <p class="congrats-text">כל הכבוד! נכנסת לטבלת השיאנים!</p>
-        <div class="input-group">
-            <input type="text" id="player-name-input" placeholder="הכנס את שמך" maxlength="15">
-            <button id="submit-score-btn" class="btn primary small-btn">שמור</button>
-        </div>
-    `;
-
-    const newSubmitBtn = document.getElementById('submit-score-btn');
-    if (newSubmitBtn) newSubmitBtn.addEventListener('click', submitHighScore);
+    renderHighScoreForm();
 
     document.getElementById('player-name-input').value = '';
 
