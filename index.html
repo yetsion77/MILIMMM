@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>עברי, דבר עברית</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header>
+            <div class="score-board">
+                <span class="label">ניקוד:</span>
+                <span id="score-display">0</span>
+            </div>
+            <div class="timer-board">
+                <span id="timer-display">90</span>
+            </div>
+        </header>
+
+        <!-- GAME AREA -->
+        <main id="game-page">
+            <div class="word-card">
+                <h1 id="foreign-word" class="fade-in">...</h1>
+            </div>
+            
+            <div class="input-area" id="input-container">
+                <!-- Dynamic Inputs go here -->
+            </div>
+
+            <div class="controls">
+                <button id="skip-btn" class="btn secondary">דלג (-5 שניות)</button>
+            </div>
+        </main>
+
+        <!-- RESULTS OVERLAY -->
+        <div id="results-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>המשחק נגמר!</h2>
+                <div class="final-score">
+                    <span class="label">תוצאה סופית</span>
+                    <span id="final-score-display" class="big-number">0</span>
+                </div>
+                <div class="final-stats">
+                    <p>מילים נכונות: <span id="final-correct">0</span></p>
+                </div>
+                <button id="restart-btn" class="btn primary">משחק חדש</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="words.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
