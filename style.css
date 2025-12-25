@@ -36,11 +36,117 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: 10px 20px;
+    /* Reduced padding top/bottom */
     position: relative;
+    overflow-y: auto;
+    /* Allow scroll if needed on really small screens */
+}
+
+/* UTILS */
+.hidden {
+    display: none !important;
+}
+
+/* SCREENS */
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #e0e7ff 0%, #f0f4f8 100%);
+    z-index: 50;
+    padding: 20px;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.screen.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.content-wrapper {
+    max-width: 400px;
+}
+
+.main-title {
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: var(--text-color);
+    margin-bottom: 2rem;
+    line-height: 1.1;
+    background: -webkit-linear-gradient(45deg, var(--accent-color), #805ad5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.instructions {
+    font-size: 1.2rem;
+    color: #4a5568;
+    margin-bottom: 3rem;
+    line-height: 1.6;
+}
+
+.instructions p {
+    margin-bottom: 1rem;
+}
+
+.instructions .note {
+    font-weight: 700;
+    color: var(--error-color);
+    font-size: 1rem;
+}
+
+/* BUTTONS */
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 50px;
+    font-family: var(--font-family);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s;
+}
+
+.btn:active {
+    transform: scale(0.95);
+}
+
+.btn.primary {
+    background-color: var(--accent-color);
+    color: white;
+    box-shadow: 0 4px 15px rgba(49, 130, 206, 0.4);
+}
+
+.btn.primary:hover {
+    background-color: var(--accent-hover);
+}
+
+.btn.secondary {
+    background-color: #edf2f7;
+    color: #4a5568;
+}
+
+.big-btn {
+    font-size: 1.3rem;
+    padding: 15px 40px;
+    width: 100%;
+    white-space: pre-line;
+    /* Handle line breaks in button text */
+    line-height: 1.3;
 }
 
 /* HEADER */
+/* Sticky header to ensure visibility with keyboard */
 header {
     display: flex;
     justify-content: space-between;
@@ -48,6 +154,11 @@ header {
     padding: 10px 0;
     font-weight: 700;
     font-size: 1.2rem;
+    background: var(--bg-color);
+    /* Match bg to hide content behind */
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 .score-board .label {
@@ -57,23 +168,30 @@ header {
 }
 
 #timer-display {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
+    /* Made slightly bigger for visibility */
     color: var(--accent-color);
     font-variant-numeric: tabular-nums;
 }
 
 /* MAIN GAME AREA */
-/* Push the content up a bit visually to stay above virtual keyboard */
 main {
     flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    /* Center vertically */
     align-items: center;
-    padding-bottom: 20vh;
-    /* Keyboard buffer */
-    gap: 30px;
+    gap: 20px;
+    padding-bottom: 60px;
+    /* Adjust padding to not hide behind keyboard if possible */
 }
+
+/* Adjust centering when keyboard is active is tricky without JS,
+   but flex 'justify-content: center' usually handles viewport resize well on Android/iOS
+   (viewport height shrinks). 
+   We ensure the content is compact.
+*/
 
 .word-card {
     text-align: center;
@@ -93,14 +211,13 @@ main {
     justify-content: center;
     gap: 6px;
     direction: rtl;
-    /* Ensure Hebrew flows right to left */
 }
 
-/* Grouping for multi-word phrases */
 .word-group {
     display: flex;
     gap: 4px;
-    margin: 0 6px;
+    margin: 0 6px 10px 6px;
+    /* Added bottom margin for multi-line flow */
 }
 
 .letter-input {
@@ -125,11 +242,6 @@ main {
     transform: translateY(-2px);
 }
 
-.letter-input.filled {
-    background-color: #ebf8ff;
-    border-color: #bee3f8;
-}
-
 .letter-input.correct {
     background-color: #c6f6d5;
     border-color: var(--success-color);
@@ -143,33 +255,15 @@ main {
 
 /* CONTROLS */
 .controls {
-    margin-top: 20px;
+    margin-top: 10px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
 }
 
-.btn {
-    padding: 12px 24px;
-    border: none;
-    border-radius: 50px;
-    font-family: var(--font-family);
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.1s;
-}
-
-.btn:active {
-    transform: scale(0.95);
-}
-
-.btn.secondary {
-    background-color: #edf2f7;
-    color: #4a5568;
-}
-
-.btn.primary {
-    background-color: var(--accent-color);
-    color: white;
-    box-shadow: 0 4px 6px rgba(49, 130, 206, 0.3);
+#skip-btn {
+    width: 100%;
+    max-width: 300px;
 }
 
 /* MODAL */
@@ -203,28 +297,10 @@ main {
     min-width: 300px;
 }
 
-.modal-content h2 {
-    font-size: 2rem;
-    margin-bottom: 20px;
-}
-
-.final-score {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 30px;
-}
-
 .big-number {
     font-size: 4rem;
     font-weight: 900;
     color: var(--accent-color);
-    line-height: 1;
-}
-
-.final-stats {
-    margin-bottom: 30px;
-    font-size: 1.1rem;
-    color: #718096;
 }
 
 /* ANIMATIONS */
@@ -268,12 +344,23 @@ main {
     animation: popIn 0.3s ease-out;
 }
 
+/* RESPONSIVE */
 @media (max-width: 400px) {
     :root {
         --input-size: 32px;
+        /* Smaller inputs for small screens */
+    }
+
+    .main-title {
+        font-size: 2.5rem;
     }
 
     #foreign-word {
         font-size: 2rem;
+    }
+
+    .big-btn {
+        font-size: 1.1rem;
+        padding: 12px 20px;
     }
 }

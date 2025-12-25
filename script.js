@@ -12,6 +12,11 @@ let gameState = {
 };
 
 // DOM Elements
+const startScreen = document.getElementById('start-screen');
+const startBtn = document.getElementById('start-btn');
+const gameHeader = document.getElementById('game-header');
+const gamePage = document.getElementById('game-page');
+
 const foreignWordEl = document.getElementById('foreign-word');
 const inputContainer = document.getElementById('input-container');
 const scoreDisplay = document.getElementById('score-display');
@@ -22,6 +27,14 @@ const finalScoreDisplay = document.getElementById('final-score-display');
 const finalCorrectDisplay = document.getElementById('final-correct');
 const restartBtn = document.getElementById('restart-btn');
 
+function showStartScreen() {
+    startScreen.classList.add('active');
+    startScreen.classList.remove('hidden');
+    gameHeader.classList.add('hidden');
+    gamePage.classList.add('hidden');
+    resultsModal.classList.add('hidden');
+}
+
 function initGame() {
     // Reset state
     gameState.score = 0;
@@ -29,13 +42,20 @@ function initGame() {
     gameState.timeLeft = GAME_DURATION;
     gameState.isPlaying = false;
 
+    // UI Transitions
+    startScreen.classList.remove('active');
+    startScreen.classList.add('hidden');
+
+    gameHeader.classList.remove('hidden');
+    gamePage.classList.remove('hidden');
+    resultsModal.classList.add('hidden');
+
     // Reset available words
     gameState.availableIndices = wordList.map((_, i) => i);
 
     // UI Update
     updateScore();
     updateTimer();
-    resultsModal.classList.add('hidden');
 
     startGame();
 }
@@ -253,7 +273,9 @@ function endGame() {
 
 // Event Listeners
 skipBtn.addEventListener('click', skipWord);
-restartBtn.addEventListener('click', initGame);
+restartBtn.addEventListener('click', initGame); // Restart goes straight to game, or maybe back to start? "New Game" usually implies restart action.
+startBtn.addEventListener('click', initGame);
 
-// Start
-initGame();
+// Start with Start Screen
+// initGame(); // Removed auto-start
+showStartScreen();
