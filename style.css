@@ -344,23 +344,95 @@ main {
     animation: popIn 0.3s ease-out;
 }
 
-/* RESPONSIVE */
-@media (max-width: 400px) {
-    :root {
-        --input-size: 32px;
-        /* Smaller inputs for small screens */
+/* RESPONSIVE & COMPACT MODE */
+@media (max-width: 600px) {
+    .app-container {
+        padding: 5px 15px;
+        /* Minimal padding */
     }
 
-    .main-title {
-        font-size: 2.5rem;
+    /* HEADER: Compact inline style */
+    header {
+        padding: 5px 0;
+        font-size: 1rem;
+        border-bottom: 1px solid #edf2f7;
+        background: rgba(240, 244, 248, 0.95);
+        /* Semi-transparent */
+    }
+
+    #timer-display {
+        font-size: 1.4rem;
+    }
+
+    /* MAIN: Remove spacer padding */
+    main {
+        padding-bottom: 10px;
+        gap: 15px;
+        /* Tighter gap */
+        justify-content: flex-start;
+        /* Start from top to avoid being pushed off */
+        padding-top: 20px;
+    }
+
+    .word-card {
+        margin-bottom: 5px;
     }
 
     #foreign-word {
-        font-size: 2rem;
+        font-size: 1.8rem;
+        margin-bottom: 5px;
     }
 
-    .big-btn {
-        font-size: 1.1rem;
-        padding: 12px 20px;
+    .input-area {
+        gap: 4px;
+    }
+
+    .word-group {
+        margin: 0 4px 8px 4px;
+    }
+
+    :root {
+        --input-size: 32px;
+        /* Smaller inputs */
+    }
+
+    .letter-input {
+        height: 40px;
+        font-size: 1.2rem;
+    }
+
+    .controls {
+        margin-top: 10px;
+    }
+
+    /* Ensure start screen title fits */
+    .main-title {
+        font-size: 2.2rem;
+    }
+
+    .instructions {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* Extra small screens (small phones with keyboard open) */
+@media (max-width: 600px) and (max-height: 500px) {
+    main {
+        gap: 10px;
+        padding-top: 10px;
+    }
+
+    #foreign-word {
+        font-size: 1.5rem;
+    }
+
+    .controls {
+        margin-top: 5px;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
     }
 }
