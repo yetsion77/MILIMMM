@@ -53,18 +53,15 @@ const submitScoreBtn = document.getElementById('submit-score-btn');
 
 // --- LEADERBOARD LOGIC (Realtime Database) ---
 
-async function loadLeaderboard() {
-    leaderboardContainer.innerHTML = '<div class="loader">טוען נתונים...</div>';
-
+// Shared function to fetch and generate leaderboard HTML
+async function fetchLeaderboardHTML() {
     try {
         const scoresRef = ref(db, 'scores');
-        // RTDB sorts ascending, so we pull the last 10 (highest)
         const q = query(scoresRef, orderByChild('score'), limitToLast(10));
         const snapshot = await get(q);
 
         if (!snapshot.exists()) {
-            leaderboardContainer.innerHTML = '<div class="loader">אין עדיין תוצאות. היה הראשון!</div>';
-            return;
+            return '<div class="loader">אין עדיין תוצאות. היה הראשון!</div>';
         }
 
         let scores = [];
@@ -72,7 +69,6 @@ async function loadLeaderboard() {
             scores.push(childSnapshot.val());
         });
 
-        // Reverse to show highest first
         scores.reverse();
 
         let html = '<table class="leaderboard-table"><thead><tr><th>#</th><th>שם</th><th>ניקוד</th></tr></thead><tbody>';
@@ -88,17 +84,37 @@ async function loadLeaderboard() {
         });
 
         html += '</tbody></table>';
-        leaderboardContainer.innerHTML = html;
+        return html;
 
     } catch (e) {
-        console.error("Error loading leaderboard: ", e);
-        // Show explicit error to user for debugging
-        leaderboardContainer.innerHTML = `<div class="loader" style="color:red; font-size:0.8rem; direction:ltr;">Error: ${e.message}</div>`;
+        console.error("Error fetching leaderboard: ", e);
+        return `<div class="loader" style="color:red; font-size:0.8rem; direction:ltr;">Error: ${e.message}</div>`;
     }
+}
+
+async function loadLeaderboard() {
+    leaderboardContainer.innerHTML = '<div class="loader">טוען נתונים...</div>';
+    const html = await fetchLeaderboardHTML();
+    leaderboardContainer.innerHTML = html;
+}
+
+function renderHighScoreForm() {
+    highScoreForm.innerHTML = `
+        <p class="congrats-text">כל הכבוד! נכנסת לטבלת השיאנים!</p>
+        <div class="input-group">
+            <input type="text" id="player-name-input" placeholder="הכנס את שמך" maxlength="15">
+            <button id="submit-score-btn" class="btn primary small-btn">שמור</button>
+        </div>
+    `;
+    const btn = document.getElementById('submit-score-btn');
+    if (btn) btn.addEventListener('click', submitHighScore);
 }
 
 async function checkHighScore(score) {
     highScoreForm.classList.add('hidden');
+    // Clear previous content/errors and restore form if hidden
+    highScoreForm.innerHTML = '';
+
     if (score === 0) return;
 
     try {
@@ -112,7 +128,6 @@ async function checkHighScore(score) {
         if (!snapshot.exists() || snapshot.numChildren() < 10) {
             isHighScore = true;
         } else {
-            // Check the lowest score (which is the FIRST one since we ordered by score ascending)
             let lowestScore = Infinity;
             let count = 0;
             snapshot.forEach(child => {
@@ -127,21 +142,31 @@ async function checkHighScore(score) {
 
         if (isHighScore) {
             highScoreForm.classList.remove('hidden');
-            setTimeout(() => playerNameInput.focus(), 500);
+            renderHighScoreForm();
+            setTimeout(() => {
+                const input = document.getElementById('player-name-input');
+                if (input) input.focus();
+            }, 500);
         }
 
     } catch (e) {
         console.error("Error checking high score: ", e);
-        highScoreForm.classList.remove('hidden'); // Show on error
+        highScoreForm.classList.remove('hidden');
+        renderHighScoreForm();
     }
 }
 
 async function submitHighScore() {
-    const name = playerNameInput.value.trim();
+    const input = document.getElementById('player-name-input');
+    const btn = document.getElementById('submit-score-btn');
+
+    if (!input || !btn) return;
+
+    const name = input.value.trim();
     if (!name) return;
 
-    submitScoreBtn.disabled = true;
-    submitScoreBtn.innerText = 'שומר...';
+    btn.disabled = true;
+    btn.innerText = 'שומר...';
 
     try {
         const scoresRef = ref(db, 'scores');
@@ -151,13 +176,18 @@ async function submitHighScore() {
             date: new Date().toISOString()
         });
 
-        highScoreForm.innerHTML = '<p class="congrats-text">התוצאה נשמרה בהצלחה!</p>';
+        // Show success and RELOAD leaderboard immediately in place of the form
+        highScoreForm.innerHTML = '<div class="loader">התוצאה נשמרה! מעדכן טבלה...</div>';
+
+        // Fetch new table
+        const tableHtml = await fetchLeaderboardHTML();
+        highScoreForm.innerHTML = '<p class="congrats-text">התוצאה נשמרה!</p>' + tableHtml;
 
     } catch (e) {
         console.error("Error saving score: ", e);
-        alert("שגיאה בשמירה: " + e.message); // Helpful alert for debugging
-        submitScoreBtn.innerText = 'שגיאה';
-        submitScoreBtn.disabled = false;
+        alert("שגיאה בשמירה: " + e.message);
+        btn.innerText = 'שגיאה';
+        btn.disabled = false;
     }
 }
 
@@ -190,7 +220,8 @@ function initGame() {
     highScoreForm.classList.add('hidden');
     renderHighScoreForm();
 
-    document.getElementById('player-name-input').value = '';
+    const input = document.getElementById('player-name-input');
+    if (input) input.value = '';
 
     gameState.availableIndices = wordList.map((_, i) => i);
 
