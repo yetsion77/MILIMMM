@@ -353,38 +353,49 @@ main {
 
     /* HEADER: Compact inline style */
     header {
-        padding: 5px 0;
-        font-size: 1rem;
-        border-bottom: 1px solid #edf2f7;
-        background: rgba(240, 244, 248, 0.95);
-        /* Semi-transparent */
+        padding: 2px 0;
+        /* Minimal padding */
+        font-size: 0.9rem;
+        /* Smaller text */
+        border-bottom: none;
+        /* Remove border to reduce visual separation */
+        background: transparent;
+        /* Merge with background */
+        position: relative;
+        /* Let it flow normally or keep sticky? User wants it "right above". Sticky is safer for scroll but if it fits we don't need scroll. Let's keep sticky but zero gap. */
+        top: 0;
+        z-index: 10;
+        margin-bottom: 0;
     }
 
     #timer-display {
-        font-size: 1.4rem;
+        font-size: 1.2rem;
     }
 
     /* MAIN: Remove spacer padding */
     main {
-        padding-bottom: 10px;
-        gap: 15px;
-        /* Tighter gap */
+        padding-top: 5px;
+        /* Almost touching header */
+        gap: 5px;
+        /* Minimal gap */
         justify-content: flex-start;
-        /* Start from top to avoid being pushed off */
-        padding-top: 20px;
+        padding-bottom: 5px;
     }
 
     .word-card {
-        margin-bottom: 5px;
+        margin-bottom: 0;
+        /* No margin */
     }
 
     #foreign-word {
-        font-size: 1.8rem;
-        margin-bottom: 5px;
+        font-size: 1.6rem;
+        margin-bottom: 2px;
+        margin-top: 0;
     }
 
     .input-area {
         gap: 4px;
+        margin-top: 0;
     }
 
     .word-group {
