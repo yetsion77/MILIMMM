@@ -389,6 +389,7 @@ main {
     font-size: 4rem;
     font-weight: 900;
     background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     display: block;
@@ -483,6 +484,23 @@ main {
     animation: popIn 0.3s ease-out;
 }
 
+/* Hidden Global Input */
+#global-input {
+    position: absolute;
+    opacity: 0;
+    top: -1000px;
+    /* Keep it off-screen visually but accessible? No, better to keep it on screen but invisible to ensure focus works on all mobiles */
+    /* Actually, top: 0, left: 0, width: 1px, height: 1px is safer */
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    border: none;
+    pointer-events: none;
+    /* We will programmatically focus it, or make it cover the area? Programmatic is better */
+}
+
 /* RESPONSIVE MOBILE TWEAKS */
 @media (max-width: 600px) {
     .app-container {
@@ -493,53 +511,65 @@ main {
 
     /* Start Screen Layout Fixes */
     .content-wrapper {
-        padding: 15px;
-        max-height: 95vh;
-        display: flex;
-        flex-direction: column;
+        padding: 20px 15px;
+        /* Allow height to be determined by content */
+        height: auto;
+        min-height: auto;
+        display: block;
+        /* Normal block flow */
+        background: rgba(255, 255, 255, 0.15);
+        /* Slightly more visible */
+    }
+
+    /* WE WANT SCROLLING on the start screen if it overflows */
+    #start-screen {
+        overflow-y: auto;
+        /* Enable scroll on the screen container */
+        display: block;
+        /* Change from flex to block/flex to allow scroll */
+        padding: 10px;
+    }
+
+    #start-screen .content-wrapper {
+        margin: 20px auto;
+        /* Center it with margin */
     }
 
     .main-title {
         font-size: 2.2rem;
-        margin-bottom: 0.5rem;
+        margin-bottom: 1rem;
     }
 
     .instructions {
-        display: none;
-        /* Hide instructions on small mobile to save space */
+        display: block;
+        /* RESTORED */
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
     }
 
     .big-btn {
-        padding: 12px 20px;
-        font-size: 1.1rem;
-        margin-bottom: 10px;
-        flex-shrink: 0;
+        padding: 15px 20px;
+        font-size: 1.2rem;
+        margin-bottom: 20px;
     }
 
     .leaderboard-section {
-        flex: 1;
-        /* Allow it to grow */
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        /* Container hides overflow */
+        max-height: 300px;
+        /* Limit height but allow inner scroll */
+        display: block;
         padding: 10px;
-        min-height: 0;
-        /* Critical for flex scrolling */
         background: rgba(0, 0, 0, 0.15);
     }
 
     #leaderboard-container {
-        flex: 1;
-        max-height: none;
-        /* Remove fixed height */
+        max-height: 200px;
         overflow-y: auto;
     }
 
     /* Game Screen Compact Layout */
     main {
         padding-top: 5px;
-        gap: 10px;
+        gap: 15px;
         justify-content: flex-start;
     }
 
@@ -571,7 +601,7 @@ main {
     }
 
     #skip-btn {
-        padding: 10px;
+        padding: 12px;
         font-size: 1rem;
         background: rgba(255, 255, 255, 0.3);
     }
@@ -621,7 +651,7 @@ main {
     }
 
     #skip-btn {
-        padding: 6px;
+        padding: 8px;
         font-size: 0.9rem;
     }
 }

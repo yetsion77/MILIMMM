@@ -281,6 +281,9 @@ function nextWord() {
     renderWord(wordObj);
 }
 
+// Global variable for current word length/structure
+let currentCorrectWord = "";
+
 function renderWord(wordObj) {
     foreignWordEl.innerText = wordObj.foreign;
     foreignWordEl.classList.remove('fade-in');
@@ -289,7 +292,18 @@ function renderWord(wordObj) {
 
     inputContainer.innerHTML = '';
 
-    const parts = wordObj.hebrew.split(' ');
+    // Clean Hebrew word (remove spaces for checking)
+    currentCorrectWord = wordObj.hebrew.replace(/ /g, '');
+    const fullHebrewWithSpaces = wordObj.hebrew;
+
+    // Reset Global Input
+    const globalInput = document.getElementById('global-input');
+    globalInput.value = '';
+    globalInput.maxLength = currentCorrectWord.length;
+    globalInput.focus();
+
+    const parts = fullHebrewWithSpaces.split(' ');
+    let charIndex = 0;
 
     parts.forEach((part, partIndex) => {
         const groupEl = document.createElement('div');
@@ -298,83 +312,67 @@ function renderWord(wordObj) {
         for (let i = 0; i < part.length; i++) {
             const letter = part[i];
 
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.className = 'letter-input';
-            input.maxLength = 1;
-            input.dataset.letter = letter;
-            input.dataset.part = partIndex;
-            input.dataset.index = i;
+            // Visual Box only (div or readonly input)
+            const box = document.createElement('div');
+            box.className = 'letter-input';
+            box.dataset.letter = letter;
+            box.dataset.globalIndex = charIndex; // track position in global string
 
-            input.addEventListener('input', (e) => handleInput(e, input));
-            input.addEventListener('keydown', (e) => handleKeyDown(e, input));
-            input.addEventListener('focus', (e) => e.target.select());
+            // Allow clicking box to focus global input
+            box.addEventListener('click', () => {
+                document.getElementById('global-input').focus();
+            });
 
-            groupEl.appendChild(input);
+            groupEl.appendChild(box);
+            charIndex++;
         }
         inputContainer.appendChild(groupEl);
     });
-
-    const firstInput = inputContainer.querySelector('input');
-    if (firstInput) {
-        // Prevent layout shifts from scrolling element out of view
-        firstInput.focus({ preventScroll: true });
-        // If on mobile, this focus *should* keep the keyboard up if done correctly synchronously
-    }
 }
 
-function handleInput(e, input) {
-    const val = e.target.value;
+// Global Input Listener
+const globalInput = document.getElementById('global-input');
+if (globalInput) {
+    globalInput.addEventListener('input', (e) => {
+        const val = e.target.value;
+        const boxes = document.querySelectorAll('.letter-input');
 
-    if (val.length > 0) {
-        const allInputs = Array.from(inputContainer.querySelectorAll('input'));
-        const idx = allInputs.indexOf(input);
-
-        if (idx < allInputs.length - 1) {
-            allInputs[idx + 1].focus();
-        }
-
-        checkWord();
-    }
-}
-
-function handleKeyDown(e, input) {
-    if (e.key === ' ' || e.code === 'Space') {
-        e.preventDefault();
-        return;
-    }
-
-    if (e.key === 'Backspace') {
-        if (input.value === '') {
-            const allInputs = Array.from(inputContainer.querySelectorAll('input'));
-            const idx = allInputs.indexOf(input);
-            if (idx > 0) {
-                e.preventDefault();
-                const prev = allInputs[idx - 1];
-                prev.focus();
+        // Update visual boxes
+        boxes.forEach((box, idx) => {
+            if (val[idx]) {
+                box.innerText = val[idx];
+                box.classList.add('filled'); // Optional styling
+            } else {
+                box.innerText = '';
+                box.classList.remove('filled');
             }
+        });
+
+        // Check if full
+        if (val.length === currentCorrectWord.length) {
+            checkWord(val);
         }
-    }
+    });
+
+    // Handle Enter key if needed, or just let auto-check handle it
 }
 
-function checkWord() {
-    const allInputs = Array.from(inputContainer.querySelectorAll('input'));
-    const currentVal = allInputs.map(input => input.value).join('');
-    const correctVal = allInputs.map(input => input.dataset.letter).join('');
+function checkWord(currentVal) {
+    // Reconstruct correct value from visual boxes datasets just to be safe, or use global var
+    // Using global `currentCorrectWord` is safer
 
-    const isFilled = allInputs.every(input => input.value.length > 0);
-
-    if (isFilled) {
-        if (currentVal === correctVal) {
-            success();
-        } else {
-            allInputs.forEach(input => input.classList.add('shake'));
-            setTimeout(() => {
-                allInputs.forEach(input => input.classList.remove('shake'));
-                allInputs.forEach(input => input.value = '');
-                allInputs[0].focus();
-            }, 500);
-        }
+    if (currentVal === currentCorrectWord) {
+        success();
+    } else {
+        const boxes = document.querySelectorAll('.letter-input');
+        boxes.forEach(box => box.classList.add('shake'));
+        setTimeout(() => {
+            boxes.forEach(box => box.classList.remove('shake'));
+            // Clear input on fail? Or let user backspace? 
+            // Usually in these games, on fail you clear it.
+            globalInput.value = '';
+            boxes.forEach(box => box.innerText = '');
+        }, 500);
     }
 }
 
@@ -383,8 +381,8 @@ function success() {
     gameState.correctCount++;
     updateScore();
 
-    const inputs = document.querySelectorAll('.letter-input');
-    inputs.forEach(i => i.classList.add('correct'));
+    const boxes = document.querySelectorAll('.letter-input');
+    boxes.forEach(b => b.classList.add('correct'));
 
     setTimeout(() => {
         nextWord();
@@ -397,15 +395,22 @@ function skipWord() {
     updateTimer();
 
     // Visual feedback
-    const allInputs = document.querySelectorAll('.letter-input');
-    allInputs.forEach(input => {
-        input.value = input.dataset.letter;
-        input.classList.add('correct'); // Optional: show answer briefly
-        input.style.borderColor = "#fc8181"; // Or show it as skipped/error color
+    const boxes = document.querySelectorAll('.letter-input');
+    let idx = 0;
+    // Fill with correct letters
+    const correctChars = currentCorrectWord.split('');
+
+    boxes.forEach(box => {
+        box.innerText = box.dataset.letter;
+        box.classList.add('correct');
+        box.style.borderColor = "#fc8181";
     });
 
     const wasPlaying = gameState.isPlaying;
-    gameState.isPlaying = false; // Temporarily block input? Actually we want to proceed fast.
+    gameState.isPlaying = false;
+
+    // Keep focus
+    document.getElementById('global-input').focus();
 
     // Timeout decreased to 800ms - balanced reading time
     setTimeout(() => {
