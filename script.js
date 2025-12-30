@@ -407,11 +407,11 @@ function skipWord() {
     const wasPlaying = gameState.isPlaying;
     gameState.isPlaying = false; // Temporarily block input? Actually we want to proceed fast.
 
-    // Reduced timeout to 150ms to keep keyboard active on many devices
+    // Timeout decreased to 800ms - balanced reading time
     setTimeout(() => {
         if (wasPlaying) gameState.isPlaying = true;
         nextWord();
-    }, 150);
+    }, 800);
 }
 
 function endGame() {
