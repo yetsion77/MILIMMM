@@ -215,6 +215,7 @@ function initGame() {
     gameHeader.classList.remove('hidden');
     gamePage.classList.remove('hidden');
     resultsModal.classList.add('hidden');
+    document.getElementById('missed-word-container').classList.add('hidden');
 
     // Reset form
     highScoreForm.classList.add('hidden');
@@ -252,9 +253,11 @@ function startTimer() {
 function updateTimer() {
     timerDisplay.innerText = Math.max(0, gameState.timeLeft);
     if (gameState.timeLeft <= 10) {
-        timerDisplay.style.color = 'var(--error-color)';
+        timerDisplay.style.color = '#F56565'; // Lighter Red for dark bg? Or just rely on text-shadow. 
+        // In new CSS text is white, so maybe make it red or yellow.
+        timerDisplay.style.color = '#FEB2B2';
     } else {
-        timerDisplay.style.color = 'var(--accent-color)';
+        timerDisplay.style.color = 'white';
     }
 }
 
@@ -313,7 +316,11 @@ function renderWord(wordObj) {
     });
 
     const firstInput = inputContainer.querySelector('input');
-    if (firstInput) firstInput.focus();
+    if (firstInput) {
+        // Prevent layout shifts from scrolling element out of view
+        firstInput.focus({ preventScroll: true });
+        // If on mobile, this focus *should* keep the keyboard up if done correctly synchronously
+    }
 }
 
 function handleInput(e, input) {
@@ -389,19 +396,22 @@ function skipWord() {
     gameState.timeLeft -= SKIP_PENALTY;
     updateTimer();
 
+    // Visual feedback
     const allInputs = document.querySelectorAll('.letter-input');
     allInputs.forEach(input => {
         input.value = input.dataset.letter;
-        input.classList.add('correct');
+        input.classList.add('correct'); // Optional: show answer briefly
+        input.style.borderColor = "#fc8181"; // Or show it as skipped/error color
     });
 
     const wasPlaying = gameState.isPlaying;
-    gameState.isPlaying = false;
+    gameState.isPlaying = false; // Temporarily block input? Actually we want to proceed fast.
 
+    // Reduced timeout to 150ms to keep keyboard active on many devices
     setTimeout(() => {
         if (wasPlaying) gameState.isPlaying = true;
         nextWord();
-    }, 1000);
+    }, 150);
 }
 
 function endGame() {
@@ -412,11 +422,30 @@ function endGame() {
     finalCorrectDisplay.innerText = gameState.correctCount;
     resultsModal.classList.remove('hidden');
 
+    // Show missed word if time ran out while playing
+    const missedContainer = document.getElementById('missed-word-container');
+    const missedReveal = document.getElementById('missed-word-reveal');
+
+    if (gameState.currentWordIndex !== -1 && gameState.timeLeft <= 0) {
+        // If we simply ran out of time
+        const wordObj = wordList[gameState.currentWordIndex];
+        // Check if user already finished it? Hard to say, usually endGame called by timer.
+        // We'll just show what the current word was.
+        missedReveal.innerText = `${wordObj.foreign} = ${wordObj.hebrew}`;
+        missedContainer.classList.remove('hidden');
+    } else {
+        missedContainer.classList.add('hidden');
+    }
+
     checkHighScore(gameState.score);
 }
 
 // Event Listeners
-skipBtn.addEventListener('click', skipWord);
+skipBtn.addEventListener('click', (e) => {
+    // Prevent button default focus stealing behavior to help keep keyboard open
+    e.preventDefault();
+    skipWord();
+});
 restartBtn.addEventListener('click', initGame);
 startBtn.addEventListener('click', initGame);
 if (submitScoreBtn) submitScoreBtn.addEventListener('click', submitHighScore);

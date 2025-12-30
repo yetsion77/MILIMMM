@@ -22,14 +22,14 @@
                     <p class="note">אם לוחצים "דלג" - גם השעון מדלג 5 שניות.</p>
                 </div>
 
+                <button id="start-btn" class="btn primary big-btn">אז יאללה, או בעברית צחה:<br>הבה נתחילה</button>
+
                 <div class="leaderboard-section">
                     <h3>🏆 טבלת שיאנים</h3>
                     <div id="leaderboard-container">
                         <div class="loader">טוען נתונים...</div>
                     </div>
                 </div>
-
-                <button id="start-btn" class="btn primary big-btn">אז יאללה, או בעברית צחה:<br>הבה נתחילה</button>
             </div>
         </div>
 
@@ -63,6 +63,12 @@
         <div id="results-modal" class="modal hidden">
             <div class="modal-content">
                 <h2>המשחק נגמר!</h2>
+
+                <div id="missed-word-container" class="hidden">
+                    <p>המילה שלא הספקת:</p>
+                    <h3 id="missed-word-reveal"></h3>
+                </div>
+
                 <div class="final-score">
                     <span class="label">תוצאה סופית</span>
                     <span id="final-score-display" class="big-number">0</span>
