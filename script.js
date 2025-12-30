@@ -328,6 +328,20 @@ function renderWord(wordObj) {
         }
         inputContainer.appendChild(groupEl);
     });
+
+    // Highlight first box initially
+    updateActiveCursor(0);
+}
+
+// Helper to update cursor position
+function updateActiveCursor(currentIndex) {
+    const boxes = document.querySelectorAll('.letter-input');
+    boxes.forEach(b => b.classList.remove('active-cursor'));
+
+    // Only add if index is valid and we are playing
+    if (currentIndex < boxes.length) {
+        boxes[currentIndex].classList.add('active-cursor');
+    }
 }
 
 // Global Input Listener
@@ -341,12 +355,15 @@ if (globalInput) {
         boxes.forEach((box, idx) => {
             if (val[idx]) {
                 box.innerText = val[idx];
-                box.classList.add('filled'); // Optional styling
+                box.classList.add('filled');
             } else {
                 box.innerText = '';
                 box.classList.remove('filled');
             }
         });
+
+        // Update Cursor
+        updateActiveCursor(val.length);
 
         // Check if full
         if (val.length === currentCorrectWord.length) {
@@ -371,7 +388,12 @@ function checkWord(currentVal) {
             // Clear input on fail? Or let user backspace? 
             // Usually in these games, on fail you clear it.
             globalInput.value = '';
-            boxes.forEach(box => box.innerText = '');
+            boxes.forEach(box => {
+                box.innerText = '';
+                box.classList.remove('filled');
+            });
+            // Reset cursor to start
+            updateActiveCursor(0);
         }, 500);
     }
 }
