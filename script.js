@@ -332,6 +332,11 @@ function handleInput(e, input) {
 }
 
 function handleKeyDown(e, input) {
+    if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        return;
+    }
+
     if (e.key === 'Backspace') {
         if (input.value === '') {
             const allInputs = Array.from(inputContainer.querySelectorAll('input'));
