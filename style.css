@@ -655,3 +655,42 @@ main {
         font-size: 0.9rem;
     }
 }
+
+/* CURSOR BLINK ANIMATION */
+@keyframes blinkBorder {
+
+    0%,
+    100% {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 2px rgba(255, 0, 128, 0.3);
+    }
+
+    50% {
+        border-color: transparent;
+        box-shadow: none;
+    }
+}
+
+.letter-input.active-cursor {
+    border-color: var(--accent-color) !important;
+    animation: blinkBorder 1.2s infinite;
+    transform: scale(1.05);
+    /* Slight pop */
+}
+
+/* MODAL SCROLL FIX FOR MOBILE */
+@media (max-width: 600px) {
+    .modal {
+        display: block;
+        /* Allow normal document flow */
+        overflow-y: auto;
+        /* Enable scroll */
+        padding: 20px 10px;
+    }
+
+    .modal-content {
+        margin: 20px auto;
+        /* Center horizontally with vertical space */
+        width: 100%;
+    }
+}
