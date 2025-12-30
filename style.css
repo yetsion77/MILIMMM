@@ -672,7 +672,8 @@ main {
 }
 
 .letter-input.active-cursor {
-    border-color: var(--accent-color) !important;
+    border: 2px solid var(--accent-color) !important;
+    /* Force border width and style */
     animation: blinkBorder 1.2s infinite;
     transform: scale(1.05);
     /* Slight pop */
